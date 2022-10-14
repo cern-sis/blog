@@ -1,21 +1,22 @@
 module.exports = {
   siteMetadata: {
-    title: `Gatsby Glass`,
+    title: `SIS TS Blog`,
     author: {
-      name: `Yinka Adedire`,
-      summary: `Self-taught front-end web dev. JAMStack.`,
+      name: `SIS TS`,
+      summary: `Blog for internal tech findings.`,
     },
-    openGraphImage: `open-graph-image.png`,
-    description: `A minimal & beautiful gatsby personal blog starter with a nice glassmorphism UI.`,
-    siteUrl: `https://gatsbyglass.netlify.app`,
+    openGraphImage: ``,
+    description: `Blog for internal tech findings.`,
+    siteUrl: `https://github.com/cern-sis/blog`,
     social: {
-      twitter: `yinkakun`,
+      twitter: ``,
     },
     socialLinks: [
       {
         name: "github",
-        url: "https://github.com",
+        url: "https://github.com/cern-sis",
       },
+      /*
       {
         name: "twitter",
         url: "https://twitter.com",
@@ -24,6 +25,7 @@ module.exports = {
         name: "instagram",
         url: "https://instagram.com",
       },
+      */
     ],
   },
   plugins: [
