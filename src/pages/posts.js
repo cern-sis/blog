@@ -8,9 +8,9 @@ const Blog = ({ data }) => {
   const posts = data.allMarkdownRemark.nodes;
 
   return (
-    <Layout title="Blog">
+    <Layout title="Posts">
       <HeaderWrapper>
-        <h1>Blog</h1>
+        <h1>Posts</h1>
 
         <Link
           css={`

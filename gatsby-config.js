@@ -8,7 +8,7 @@ module.exports = {
     },
     openGraphImage: ``,
     description: `Blog for internal tech findings.`,
-    siteUrl: `https://github.com/cern-sis/blog`,
+    siteUrl: `https://cern-sis.github.io/blog`,
     social: {
       twitter: ``,
     },
