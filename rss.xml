@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Gatsby Glass RSS Feed]]></title><description><![CDATA[Blog for internal tech findings.]]></description><link>https://cern-sis.github.io/blog</link><generator>GatsbyJS</generator><lastBuildDate>Fri, 28 Oct 2022 13:19:54 GMT</lastBuildDate><item><title><![CDATA[About Us]]></title><description><![CDATA[Hi, We are SIS TS This website acts as a tech blog for us.]]></description><link>https://cern-sis.github.io/blog/about/</link><guid isPermaLink="false">https://cern-sis.github.io/blog/about/</guid><content:encoded>&lt;h1&gt;Hi, We are SIS TS&lt;/h1&gt;
+&lt;p&gt;This website acts as a tech blog for us.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Home]]></title><description><![CDATA[Hello World Welcome to SIS TS engineering blog.]]></description><link>https://cern-sis.github.io/blog/</link><guid isPermaLink="false">https://cern-sis.github.io/blog/</guid><content:encoded>&lt;h1&gt;Hello World&lt;/h1&gt;
+&lt;p&gt;Welcome to SIS TS engineering blog.&lt;/p&gt;</content:encoded></item><item><title><![CDATA[Connecting API uptime monitoring dashboard and Integrating with Kubernetes]]></title><description><![CDATA[Why? We put a lot of work and money into developing our APIs. We have tested it, tweaked it, and tested it some more. Everything works great…]]></description><link>https://cern-sis.github.io/blog/posts/2022-10-28-Connecting-api-uptime-monitoring-dashboard-and-Integrating-with-Kubernetes/</link><guid isPermaLink="false">https://cern-sis.github.io/blog/posts/2022-10-28-Connecting-api-uptime-monitoring-dashboard-and-Integrating-with-Kubernetes/</guid><pubDate>Fri, 28 Oct 2022 00:00:00 GMT</pubDate><content:encoded>&lt;h2&gt;Why?&lt;/h2&gt;
+&lt;p&gt;We put a lot of work and money into developing our APIs. We have tested it, tweaked it, and tested it some more. Everything works great during testing, and the live version does well.&lt;/p&gt;
+&lt;p&gt;Let’s face it, APIs fail for many reasons, so our investment in time needs to be protected. We owe it to the users of our API to ensure that it performs at optimum levels 24/7.&lt;/p&gt;
+&lt;p&gt;We need to monitor our APIs because,&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;It is OUR responsibility.&lt;/li&gt;
+&lt;li&gt;Regular website monitoring may not capture API issues.&lt;/li&gt;
+&lt;li&gt;Not every API method may be working.&lt;/li&gt;
+&lt;li&gt;Reduced user satisfaction&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We can only be sure to conduct our own testing to protect our investment from third-party API failures.&lt;/p&gt;
+&lt;h2&gt;Monitoring Dashboard: Statping&lt;/h2&gt;
+&lt;p&gt;We decided to integrate statping for API monitoring.&lt;/p&gt;
+&lt;p&gt;Statping is an easy to use Status Page for websites and applications. Statping will automatically fetch the application and render a status page.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Step 1: Adding the statping service in docker compose for development setup&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml=&quot;&gt;&lt;pre class=&quot;language-yaml=&quot;&gt;&lt;code class=&quot;language-yaml=&quot;&gt;statping:
+  image: statping/statping:v0.90.74
+  restart: always
+  ports:
+    - &amp;quot;8080:8080&amp;quot;
+  volumes:
+    - ./docker/statping/app/config.yml:/app/config.yml
+    - ./docker/statping/app/services.yml:/app/services.yml
+  &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;strong&gt;Step 2: Adding the custom config and services&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Now, we have mounted two files which will contain our config and services for statping setup. These files &lt;em&gt;should&lt;/em&gt; be present before the service startup in the mounted path.&lt;/p&gt;
+&lt;p&gt;we can provide the configuartion for setup of statping. Read in detail &lt;a href=&quot;https://github.com/statping/statping/wiki/config.yml&quot;&gt;here.&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Example &lt;code class=&quot;language-text&quot;&gt;config.yml&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml=&quot;&gt;&lt;pre class=&quot;language-yaml=&quot;&gt;&lt;code class=&quot;language-yaml=&quot;&gt;connection: sqlite3
+user: &amp;lt;username&amp;gt;
+password: &amp;lt;password&amp;gt;
+database: statping
+api_secret: &amp;lt;secret&amp;gt;
+language: en
+allow_reports: true
+location: /app 
+sqlfile: /app/statping.db
+disable_http: false
+demo_mode: false
+disable_logs: false
+use_assets: false
+sample_data: false
+use_cdn: false
+disable_colors: false
+NAME: &amp;lt;Name of the Project&amp;gt;
+DESCRIPTION: Monitoring Dashboard&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We can import multiple services when Statping first loads by creating a file named services.yml in the working directory for Statping. It will insert the new service into the database, and will not be re-added on reboot.&lt;/p&gt;
+&lt;p&gt;Example: &lt;code class=&quot;language-text&quot;&gt;service.yml&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml=&quot;&gt;&lt;pre class=&quot;language-yaml=&quot;&gt;&lt;code class=&quot;language-yaml=&quot;&gt;services:
+  - name: &amp;lt;Service Name&amp;gt;
+    domain: {{host_url}}/ping
+    expected: Pong!
+    type: http
+    method: GET
+    headers: {{other_headers}},Authorization=Bearer {{token}}
+    port: 80
+    check_interval: 60
+    timeout: 15
+    expected_status: 200
+    allow_notifications: true
+    notify_after: 2
+    notify_all_changes: true
+    public: true
+    redirect: true&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We have a python script which populates the services.yml with the required &lt;code class=&quot;language-text&quot;&gt;host_url&lt;/code&gt;, &lt;code class=&quot;language-text&quot;&gt;headers&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Now we will move on to adding statping in our k8s cluster. We use &lt;em&gt;Kustomize&lt;/em&gt; which is a standalone tool to customize Kubernetes objects through a kustomization file.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Step 3: Creating a Deployment for Statping in the cluster&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;A Deployment provides declarative updates for Pods and ReplicaSets.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml=&quot;&gt;&lt;pre class=&quot;language-yaml=&quot;&gt;&lt;code class=&quot;language-yaml=&quot;&gt;---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: statping
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    spec:
+      volumes:
+        - configMap:
+            name: statping-cfg
+          name: config
+      initContainers: []
+      containers:
+        - name: statping
+          image: hunterlong/statping:v0.90.74
+          volumeMounts:
+            - name: data
+              mountPath: /app
+            - name: config
+              mountPath: /app/config.yml
+              subPath: config.yml
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: statping-creds
+          env:
+            - name: DOMAIN
+                value: https://$(DOMAIN)/status
+            - name: BASE_PATH
+                value: status&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;strong&gt;Step 4: Creating a Ingress for Statping in the cluster&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Ingress exposes HTTP and HTTPS routes from outside the cluster to services within the cluster. Traffic routing is controlled by rules defined on the Ingress resource.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml=&quot;&gt;&lt;pre class=&quot;language-yaml=&quot;&gt;&lt;code class=&quot;language-yaml=&quot;&gt;---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: statping
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+spec:
+  tls:
+    - hosts: [$(DOMAIN)]
+      secretName: statping-cert
+  rules:
+    - host: $(DOMAIN)
+      http:
+        paths:
+          - path: /status
+            pathType: Prefix
+            backend:
+              service:
+                name: statping
+                port:
+                  name: http&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;strong&gt;Step 5: Creating a Service for Statping in the cluster&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Service is an abstract way to expose an application running on a set of Pods as a network service.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml=&quot;&gt;&lt;pre class=&quot;language-yaml=&quot;&gt;&lt;code class=&quot;language-yaml=&quot;&gt;---
+apiVersion: v1
+kind: Service
+metadata:
+  name: statping
+  annotations:
+    prometheus.io/metrics_path: /status/metrics
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+    - name: metrics
+      port: 9090
+      protocol: TCP
+      targetPort: http&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;strong&gt;Step 6: Creating a ConfigMap and Secret for statping&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;A ConfigMap is an API object used to store non-confidential data in key-value pairs. Pods can consume ConfigMaps as environment variables, command-line arguments, or as configuration files in a volume.&lt;/p&gt;
+&lt;p&gt;A ConfigMap allows you to decouple environment-specific configuration from your container images, so that your applications are easily portable.&lt;/p&gt;
+&lt;p&gt;ConfigMaps and Secrets hold configuration or sensitive data that are used by other Kubernetes objects, such as Pods.&lt;/p&gt;
+&lt;p&gt;The source of truth of ConfigMaps or Secrets are usually external to a cluster.&lt;/p&gt;
+&lt;p&gt;Kustomize has secretGenerator and configMapGenerator, which generate Secret and ConfigMap from files or literals.&lt;/p&gt;
+&lt;p&gt;To use a ConfigMap in a Deployment, reference it by the name of the configMapGenerator. Kustomize will automatically replace this name with the generated name.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml=&quot;&gt;&lt;pre class=&quot;language-yaml=&quot;&gt;&lt;code class=&quot;language-yaml=&quot;&gt;
+configMapGenerator:
+  - name: statping-globals
+    literals:
+      - DOMAIN=&amp;lt;&amp;gt;
+      - BACKUP_PATH=&amp;lt;&amp;gt;
+  - name: statping-s3-globals
+    literals:
+      - FILE_NAME=&amp;lt;&amp;gt;
+      - BUCKET_NAME=&amp;lt;&amp;gt;
+      - S3_HOST=&amp;lt;&amp;gt;
+      - STATPING_HOST_EXPORT_URL=&amp;lt;&amp;gt;
+      - STATPING_HOST_IMPORT_URL=&amp;lt;&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We have statping configured in our cluster and ready to be deployed.&lt;/p&gt;
+&lt;p&gt;Now, we need to persist the data across pod restarts/failures. For acheiving that, we decided to go for a two way approach.&lt;/p&gt;
+&lt;p&gt;We need to export the statping data on a regular interval that means implementing a cron job and import the data on pod restart that means implementing a side car for importing services just after the pod is up again.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Step 7: Adding a Cronjob for exporting the statping data&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;For the cronjob, we need a script that will export the services metadata with history and save it to S3 bucket. I created the script for export &lt;a href=&quot;https://github.com/cern-sis/statping-s3/blob/main/export-services.py&quot;&gt;here&lt;/a&gt;. Now after the script, I need to run as a cronjob which will run every hour to export the data and keep it updated.&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml=&quot;&gt;&lt;pre class=&quot;language-yaml=&quot;&gt;&lt;code class=&quot;language-yaml=&quot;&gt;apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: statping-export
+spec:
+  schedule: &amp;#39;@hourly&amp;#39;
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: statping-export
+              image: registry.cern.ch/cern-sis/statping-s3:v1.18.0
+              imagePullPolicy: IfNotPresent
+              args: [&amp;#39;./export-services.py&amp;#39;]
+              envFrom:
+                - secretRef:
+                    name: statping-creds
+                - secretRef:
+                    name: statping-s3-creds
+                - configMapRef:
+                    name: statping-s3-globals&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;&lt;strong&gt;Step 8: Adding a sidecar for importing the statping data on Statping Pod Restart&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;This step was the challenging part and took most of the time since the import services is a script, and when the import is done, the Pod stops, both containers (Statping and the Import services sidecar) restart, and the container was reaching Backoff Limit. I created the script for import &lt;a href=&quot;https://github.com/cern-sis/statping-s3/blob/main/import-services.py&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The first way is to add &lt;code class=&quot;language-text&quot;&gt;restartPolicy: OnFailure&lt;/code&gt; to the container, but only &lt;code class=&quot;language-text&quot;&gt;Always&lt;/code&gt; is supported.&lt;/p&gt;
+&lt;p&gt;Another way was to keep the script running endlessly, and it worked 🎉&lt;/p&gt;
+&lt;p&gt;Below is the patch for adding sidecar container to the statping:&lt;/p&gt;
+&lt;div class=&quot;gatsby-highlight&quot; data-language=&quot;yaml=&quot;&gt;&lt;pre class=&quot;language-yaml=&quot;&gt;&lt;code class=&quot;language-yaml=&quot;&gt;- name: statping-import
+  image: registry.cern.ch/cern-sis/statping-s3:v1.18.0
+  args: [&amp;#39;./import-services.py&amp;#39;]
+  envFrom:
+    - secretRef:
+        name: statping-creds
+    - secretRef:
+        name: statping-s3-creds
+    - configMapRef:
+        name: statping-s3-globals&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;We have now reached the end of this blog and Statping is ready to tested on qa and deployed on Production environments.&lt;/p&gt;
+&lt;p&gt;I personally learned a lot of things while intergrating the Statping dashboard. Thanks to Benjamin for helping me to understand Kubernetes concepts and actively answering to my questions.&lt;/p&gt;</content:encoded></item></channel></rss>
